@@ -1,0 +1,24 @@
+FROM debian:buster
+
+# Instalar dependencias, el enlace hace falta porque han cambiado las rutas del repo de debian buster
+RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
+    apt update && \
+    apt install -y nginx vim curl openssl && \
+# Eliminar cache
+    rm -rf /var/lib/apt/lists/* && \
+# Crear certificado TSL
+	mkdir -p /etc/nginx/ssl && \
+	 openssl req -x509 -nodes \
+        -out /etc/nginx/ssl/inception.crt \
+        -keyout /etc/nginx/ssl/inception.key \
+        -subj "/CN=inception" && \
+# Carpeta para los archivos de configuracion de nginx
+	mkdir -p /var/run/nginx && \
+	chmod 755 /var/www/html && \
+	chown -R www-data:www-data /var/www/html
+
+# reemplaza el archivo conf de nginx por el nuestro 
+COPY conf/nginx.conf /etc/nginx/nginx.conf
+	
+#iniciar nginx al arranque
+CMD [ "nginx", "-g", "daemon off;" ]
