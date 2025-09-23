@@ -2,11 +2,11 @@ FROM debian:buster
 
 RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
     apt update && \
-    apt install -y mariadb-server && \
-    rm -rf /var/lib/apt/lists/*
+    apt install -y mariadb-server
 
 COPY tools/initdb.sh /initdb.sh
-COPY conf/50-server.cnf	/etc/mysql/mariadb.conf.d/50-server.cnf
 RUN chmod +x /initdb.sh
 
-CMD ["/initdb.sh"]
+EXPOSE 3306
+
+ENTRYPOINT ["/initdb.sh"]
