@@ -6,8 +6,7 @@ RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /
     rm -rf /var/lib/apt/lists/*
 
 COPY tools/initdb.sh /initdb.sh
+COPY conf/50-server.cnf	/etc/mysql/mariadb.conf.d/50-server.cnf
 RUN chmod +x /initdb.sh
-
-EXPOSE 3306
 
 CMD ["/initdb.sh"]

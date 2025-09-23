@@ -18,7 +18,7 @@ RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /
 	chown -R www-data:www-data /var/www/html
 
 # reemplaza el archivo conf de nginx por el nuestro 
-COPY conf/nginx.conf /etc/nginx/nginx.conf
+# COPY conf/nginx.conf /etc/nginx/nginx.conf
 	
 #iniciar nginx al arranque
 CMD [ "nginx", "-g", "daemon off;" ]
