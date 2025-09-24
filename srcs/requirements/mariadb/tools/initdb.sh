@@ -9,15 +9,19 @@ until mysqladmin ping --silent; do
 	sleep 2
 done
 
-mysql -u root <<-EOSQL
-	CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;
-	CREATE USER IF NOT EXISTS \`${SQL_USER}\`@'%' IDENTIFIED BY '${SQL_PASSWORD}';
-	GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO \`${SQL_USER}\`@'%';
-	ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';
-	FLUSH PRIVILEGES;
-EOSQL
+# Inicializar la base de datos si aún no existe
+if [ ! -d "/var/lib/mysql/${SQL_DATABASE}" ]; then
+    mysql -u "root" -p"${SQL_ROOT_PASSWORD}" <<EOF
+CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;
+CREATE USER IF NOT EXISTS '${SQL_USER}'@'%' IDENTIFIED BY '${SQL_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO '${SQL_USER}'@'%';
+FLUSH PRIVILEGES;
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';
+EOF
+fi
 
-mysqladmin -u root -p"${SQL_ROOT_PASSWORD}" shutdown
+# Apagar la instancia en segundo plano
+mysqladmin -u "root" -p"${SQL_ROOT_PASSWORD}" shutdown
 
-
-exec mysqld_safe --datadir=/var/lib/mysql
+# Iniciar MariaDB en primer plano para mantener el contenedor activo
+exec mysqld --datadir=/var/lib/mysql --user=mysql
