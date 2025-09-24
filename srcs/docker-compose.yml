@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mariadb:
     container_name: mariadb
@@ -31,6 +29,8 @@ services:
 
   nginx:
     container_name: nginx
+    volumes:
+      - wordpress:/var/www/html
     build:
       context: requirements/nginx
       dockerfile: Dockerfile
