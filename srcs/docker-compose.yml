@@ -35,6 +35,7 @@ services:
     env_file: .env
     volumes:
       - wordpress:/var/www/html
+      - ./requirements/bonus/react/dist:/var/www/react:ro
     ports:
       - "80:80"
       - "443:443"
@@ -77,6 +78,15 @@ services:
     - "8089:8080"
     restart: "no"
     env_file: .env
+    networks:
+    - inception
+
+  glances:
+    build: ./requirements/bonus/glances
+    container_name: glances
+    ports:
+      - "61208:61208"
+    restart: unless-stopped
 
 volumes:
   mariadb:

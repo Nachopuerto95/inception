@@ -1,13 +1,13 @@
 DOCKER_COMPOSE=docker compose
 DOCKER_COMPOSE_FILE=./srcs/docker-compose.yml
-LOGIN=jpuerto
+LOGIN=jpuerto-
 
 .PHONY: kill build down clean re set-login fclean
 
-build: set-login
+build: REMINDER set-login
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up --build
 
-set-login:
+set-login: 
 	sudo -v; \
 	sudo sysctl vm.overcommit_memory=1; \
 	if ! grep -q "${LOGIN}.42.fr" /etc/hosts; then \
@@ -27,11 +27,14 @@ down:
 clean:
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down -v
 
-fclean: clean
+fclean: REMINDER clean
 	@echo "Borrando directorios de volumenes..."
 	@sudo -v
 	sudo rm -rf /home/jpuerto/data/mariadb; \
-	sudo rm -rf /home/jpuerto/data/wordpress
+	sudo rm -rf /home/jpuerto/data/wordpress; 
 	@docker system prune -a -f
+
+REMINDER:
+	@echo -e '\033[1;31m[AVISO]: RECUERDA CAMBIAR EL DIRECTORIO EN EL YAML Y EL MAKEFILE JPUERTO POR JPUERTO-\033[0m'
 
 re: clean build

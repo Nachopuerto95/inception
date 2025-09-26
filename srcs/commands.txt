@@ -9,3 +9,18 @@ docker compose down -v --remove-orphans
 docker exec -it redis bash
 redis-cli
 PING
+
+corregir
+
+
+https://jpuerto-.42.fr/bonus/
+https://jpuerto-.42.fr
+
+# monitor flances
+http://localhost:61208/
+
+# adminer
+http://jpuerto-.42.fr:8089/
+
+# ftp
+consola: ftp jpuerto-.42.fr

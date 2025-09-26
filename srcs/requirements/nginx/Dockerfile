@@ -7,7 +7,7 @@ RUN apt-get update && \
         -newkey rsa:2048 \
         -keyout /etc/nginx/ssl/nginx.key \
         -out /etc/nginx/ssl/nginx.crt \
-        -subj "/CN=localhost"
+        -subj "/CN=jpuerto-.42.fr"
 
 COPY conf/nginx.conf /etc/nginx/sites-available/default
 
