@@ -9,7 +9,6 @@ until mysqladmin ping --silent; do
 	sleep 2
 done
 
-# Inicializar la base de datos si aún no existe
 if [ ! -d "/var/lib/mysql/${SQL_DATABASE}" ]; then
     mysql -u "${ROOT_USR}" -p"${SQL_ROOT_PASSWORD}" <<EOF
 CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;
@@ -20,8 +19,6 @@ ALTER USER '${ROOT_USR}'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';
 EOF
 fi
 
-# Apagar la instancia en segundo plano
 mysqladmin -u "${ROOT_USR}" -p"${SQL_ROOT_PASSWORD}" shutdown
 
-# Iniciar MariaDB en primer plano para mantener el contenedor activo
 exec mysqld --datadir=/var/lib/mysql --user=mysql
