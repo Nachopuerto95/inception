@@ -1,40 +1,46 @@
-DOCKER_COMPOSE=docker compose
-DOCKER_COMPOSE_FILE=./srcs/docker-compose.yml
-LOGIN=jpuerto-
+DOCKER_COMPOSE = sudo docker compose
+DOCKER_COMPOSE_FILE = ./srcs/docker-compose.yml
+LOGIN = jpuerto-
+DATA_DIR = /home/$(LOGIN)/data
 
-.PHONY: kill build down clean re set-login fclean
+.PHONY: all setup build up down stop start restart logs clean fclean re
 
-build: REMINDER set-login
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up --build
+all: setup build up
 
-set-login: 
-	sudo -v; \
-	sudo sysctl vm.overcommit_memory=1; \
-	if ! grep -q "${LOGIN}.42.fr" /etc/hosts; then \
-		echo "Añadiendo ${LOGIN}.42.fr a /etc/hosts"; \
-		echo "127.0.0.1 ${LOGIN}.42.fr" | sudo tee -a /etc/hosts > /dev/null; \
-	fi; \
-	echo "Creando directorios para los volúmenes..."; \
-	sudo mkdir -p /home/jpuerto/data/mariadb; \
-	sudo mkdir -p /home/jpuerto/data/wordpress
+setup:
+	@sudo sysctl vm.overcommit_memory=1
+	@if ! grep -q "$(LOGIN).42.fr" /etc/hosts; then \
+		echo "127.0.0.1 $(LOGIN).42.fr" | sudo tee -a /etc/hosts > /dev/null; \
+	fi
+	@sudo mkdir -p $(DATA_DIR)/mariadb
+	@sudo mkdir -p $(DATA_DIR)/wordpress
 
-kill:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) kill
+build:
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) build
+
+up:
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d
 
 down:
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down
 
-clean:
+stop:
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) stop
+
+start:
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) start
+
+restart:
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) restart
+
+logs:
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) logs -f
+
+clean: down
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down -v
 
-fclean: REMINDER clean
-	@echo "Borrando directorios de volumenes..."
-	@sudo -v
-	sudo rm -rf /home/jpuerto/data/mariadb; \
-	sudo rm -rf /home/jpuerto/data/wordpress; 
-	@docker system prune -a -f
+fclean: clean
+	@sudo rm -rf $(DATA_DIR)
+	@sudo docker system prune -af
 
-REMINDER:
-	@echo -e '\033[1;31m[AVISO]: RECUERDA CAMBIAR EL DIRECTORIO EN EL YAML Y EL MAKEFILE JPUERTO POR JPUERTO-\033[0m'
-
-re: clean build
+re: fclean all

@@ -1,26 +1,8 @@
-[server]
-
 [mysqld]
-
-user                    = mysql
-pid-file                = /run/mysqld/mysqld.pid
-socket                  = /run/mysqld/mysqld.sock
-port                    = 3306
-basedir                 = /usr
-datadir                 = /var/lib/mysql
-tmpdir                  = /tmp
-lc-messages-dir         = /usr/share/mysql
-
-innodb_use_native_aio = 0
-
-bind-address            = 0.0.0.0
-
-query_cache_size        = 16M
-
-log_error = /var/log/mysql/error.log
-
-character-set-server  = utf8mb4
-collation-server      = utf8mb4_general_ci
-
-[embedded]
-[mariadb]
+# Donde se guardan los datos de las bases de datos
+datadir         = /var/lib/mysql
+# Socket para comunicacion local
+socket          = /run/mysqld/mysqld.sock
+# 0.0.0.0 = acepta conexiones desde cualquier IP (necesario para que WordPress se conecte)
+bind-address    = 0.0.0.0
+port            = 3306

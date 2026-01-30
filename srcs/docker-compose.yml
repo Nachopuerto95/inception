@@ -1,108 +1,154 @@
+# version ya no es necesario en versiones recientes de docker compose
+
 services:
   mariadb:
+    # build = donde esta el Dockerfile para construir la imagen
+    build: ./requirements/mariadb
+    # image = nombre que tendra la imagen (debe coincidir con el servicio)
+    image: mariadb
+    # container_name = nombre del contenedor al ejecutarse
     container_name: mariadb
-    build:
-      context: ./requirements/mariadb
-    env_file: .env
+    # restart = se reinicia automaticamente si se cae (excepto si lo paras tu)
+    restart: unless-stopped
+    # env_file = archivo con variables de entorno que recibe el contenedor
+    env_file:
+      - .env
+    # secrets = archivos con contraseñas montados en /run/secrets/
+    secrets:
+      - db_password
+      - db_root_password
+    # volumes = datos persistentes (no se pierden al recrear el contenedor)
     volumes:
       - mariadb:/var/lib/mysql
+    # networks = red interna donde se comunican los contenedores
     networks:
       - inception
-    restart: unless-stopped
-    expose:
-      - "3306"
 
   wordpress:
+    build: ./requirements/wordpress
+    image: wordpress
     container_name: wordpress
-    build:
-      context: ./requirements/wordpress
-    env_file: .env
-    volumes:
-      - wordpress:/var/www/html
-    networks:
-      - inception
+    restart: unless-stopped
+    # depends_on = espera a que mariadb se cree antes de arrancar
     depends_on:
       - mariadb
-    restart: on-failure
-    expose:
-      - "9000"
-
-  nginx:
-    container_name: nginx
-    build:
-      context: requirements/nginx
-      dockerfile: Dockerfile
-    env_file: .env
+      - redis
+    env_file:
+      - .env
+    secrets:
+      - db_password
+      - wp_admin_password
+      - wp_user_password
     volumes:
       - wordpress:/var/www/html
-      - ./requirements/bonus/react/dist:/var/www/react:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - wordpress
     networks:
       - inception
 
   redis:
-    build: ./requirements/bonus/redis
+    build: ./requirements/redis
     image: redis
     container_name: redis
+    restart: unless-stopped
     networks:
       - inception
-    restart: on-failure
-  
+
   ftp:
-    build:
-      context: ./requirements/bonus/ftp
-      args:
-        FTPUSER: ${FTPUSER}
-        FTPPASS: ${FTPPASS}
+    build: ./requirements/ftp
+    image: ftp
     container_name: ftp
+    restart: unless-stopped
+    env_file:
+      - .env
+    secrets:
+      - ftp_password
+    # Puertos FTP: 21 = control, 21100-21110 = modo pasivo
     ports:
       - "21:21"
-      - "30000-30009:30000-30009"
-
+      - "21100-21110:21100-21110"
+    # Mismo volumen que WordPress para acceder a sus archivos
     volumes:
       - wordpress:/var/www/html
-    restart:  unless-stopped
-    env_file: .env
+    networks:
+      - inception
+
+  static-site:
+    build: ./requirements/static-site
+    image: static-site
+    container_name: static-site
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - inception
 
   adminer:
-    build: ./requirements/bonus/adminer
-    container_name: adminer
+    build: ./requirements/adminer
     image: adminer
-    depends_on:
-    - mariadb
-    ports:
-    - "8089:8080"
-    restart: "no"
-    env_file: .env
-    networks:
-    - inception
-
-  glances:
-    build: ./requirements/bonus/glances
-    container_name: glances
-    ports:
-      - "61208:61208"
+    container_name: adminer
     restart: unless-stopped
+    networks:
+      - inception
+    ports:
+      - "8081:8081"
 
+  portainer:
+    build: ./requirements/portainer
+    image: portainer
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "8082:9000"
+    # Acceso al socket de Docker para gestionar contenedores
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - inception
+
+  nginx:
+    build: ./requirements/nginx
+    image: nginx
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      - wordpress
+    # ports = mapea puerto del host al contenedor (solo nginx expone puertos)
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - inception
+
+# Definicion de volumes nombrados (requisito del subject, no bind mounts)
 volumes:
   mariadb:
     driver: local
+    # driver_opts = monta un directorio del host como volumen nombrado
     driver_opts:
       type: none
-      device: /home/jpuerto/data/mariadb
+      device: /home/jpuerto-/data/mariadb
       o: bind
-
   wordpress:
     driver: local
     driver_opts:
       type: none
-      device: /home/jpuerto/data/wordpress
+      device: /home/jpuerto-/data/wordpress
       o: bind
 
+# Definicion de secrets (archivos locales con contraseñas)
+secrets:
+  db_password:
+    file: ../secrets/db_password.txt
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  wp_admin_password:
+    file: ../secrets/wp_admin_password.txt
+  wp_user_password:
+    file: ../secrets/wp_user_password.txt
+  ftp_password:
+    file: ../secrets/ftp_password.txt
+
+# Red bridge para comunicacion entre contenedores
 networks:
   inception:
     driver: bridge
